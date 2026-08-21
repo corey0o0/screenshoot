@@ -1,0 +1,67 @@
+name: Sungan
+options:
+  bundleIdPrefix: com.corey0o0
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  Sungan:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Sungan
+      - path: Shared
+    info:
+      path: Sungan/App/Info.plist
+    entitlements:
+      path: Sungan/App/Sungan.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.corey0o0.sungan
+        PRODUCT_NAME: "순간"
+        INFOPLIST_KEY_CFBundleDisplayName: "순간"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: SunganWidgetExtension
+        embed: true
+  SunganWidgetExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: SunganWidget
+      - path: Shared
+    info:
+      path: SunganWidget/Info.plist
+    entitlements:
+      path: SunganWidget/SunganWidget.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.corey0o0.sungan.widget
+        PRODUCT_NAME: SunganWidget
+        INFOPLIST_KEY_CFBundleDisplayName: "순간 위젯"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+schemes:
+  Sungan:
+    build:
+      targets:
+        Sungan: all
+    run:
+      config: Debug
+    archive:
+      config: Release
