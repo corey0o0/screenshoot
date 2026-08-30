@@ -37,6 +37,9 @@ struct ScreenshotRowView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
+                Text(ScreenshotDateFormatter.shared.short(for: screenshot.createdAt))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
         }
         .task {

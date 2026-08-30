@@ -23,6 +23,14 @@ struct ScreenshotDetailView: View {
                 }
             }
 
+            Section("정보") {
+                LabeledContent("촬영 시각") {
+                    Text(ScreenshotDateFormatter.shared.detailed(for: screenshot.createdAt))
+                }
+                // 촬영 위치는 표시하지 않는다. 스크린샷은 화면 버퍼를 저장한 것이라
+                // 카메라 사진과 달리 EXIF GPS가 없고 PHAsset.location도 항상 nil이다.
+            }
+
             Section("분류") {
                 Picker("카테고리", selection: $screenshot.category) {
                     ForEach(ScreenshotCategory.allCases) { category in
