@@ -28,9 +28,14 @@ struct PhotoLibraryService {
         return assets
     }
 
-    /// OCR용 이미지. 축소하면 글자 높이가 그대로 줄어 인식률이 급격히 떨어지므로
-    /// 원본 해상도를 그대로 받는다. (1179x2556 스크린샷을 1024에 맞춰 넣으면
-    /// 40% 크기가 되어 32px 본문이 13px이 된다.)
+    /// OCR용 이미지는 원본 해상도로 받는다.
+    ///
+    /// 예전에는 1024x1024에 맞춰 넘겨서 1179x2556 스크린샷이 40%로 줄어들었다.
+    /// OCRBenchmarkTests로 측정한 축소의 대가(합성 이미지, 본문 46px 기준):
+    ///   100% → CER 0.0% / 60% → 0.0% / 40% → 0.6% / 25% → 2.5% (조각 1개 유실)
+    /// 극적이진 않지만 분명히 손해이고, 스크린샷 한 장은 원본으로 처리해도
+    /// 메모리·시간 부담이 크지 않아 원본을 쓴다.
+    /// 실제 스크린샷은 합성 이미지보다 조건이 나쁘므로 격차는 더 클 수 있다.
     func requestImageForOCR(for asset: PHAsset) async -> UIImage? {
         await requestImage(for: asset, targetSize: PHImageManagerMaximumSize)
     }

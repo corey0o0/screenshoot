@@ -13,16 +13,17 @@ struct OCRResult {
 }
 
 struct OCRService {
-    /// 인식할 글자의 최소 높이(이미지 높이 대비 비율).
+    /// 인식할 글자의 최소 높이(이미지 높이 대비 비율). nil이면 Vision 기본값을 그대로 쓴다.
     ///
-    /// Vision 기본값은 1/32(≈0.031)로, 이미지 높이가 2556px이면 80px 이상인 글자만
-    /// 대상으로 삼는다. 스크린샷 본문은 보통 30px 안팎이라 기본값으로는 본문이
-    /// 통째로 빠질 수 있다. 값을 낮추면 처리 시간이 늘어나므로,
-    /// OCRBenchmarkTests로 실제 수치를 보고 조정할 것.
-    var minimumTextHeight: Float
+    /// 기본값 1/32(≈0.031)가 스크린샷 본문 비율(≈0.018)보다 커서 본문이 누락될 거라
+    /// 예상했지만, OCRBenchmarkTests로 0.03125~0.004를 훑어본 결과 **차이가 전혀 없었다**
+    /// (40줄 전부 인식, CER 0.0% 동일). 근거 없이 기본값을 덮어쓰지 않고 nil로 둔다.
+    /// 실기기·실제 스크린샷에서 다르게 나올 여지는 남아 있어 손잡이는 유지한다.
+    var minimumTextHeight: Float?
 
-    /// 한국어에서는 언어 교정이 고유명사·아이디·상품명을 엉뚱하게 "고쳐" 놓는
-    /// 경우가 있다. 벤치마크로 켠 쪽/끈 쪽을 비교해 결정할 수 있게 열어둔다.
+    /// 한국어에서는 언어 교정이 고유명사·아이디·상품명을 엉뚱하게 "고쳐" 놓을 수 있다.
+    /// 다만 합성 이미지 벤치마크로는 on/off 차이가 나타나지 않았다(교정할 오류 자체가 없어서).
+    /// 실제 OCR 오류가 섞이는 실기기에서 재봐야 판단할 수 있다.
     var usesLanguageCorrection: Bool
 
     /// 교정 사전에 없는 도메인 단어(앱 이름, 브랜드 등)를 보강한다.
@@ -30,10 +31,12 @@ struct OCRService {
 
     /// 이 값보다 신뢰도가 낮은 조각은 버린다. 아주 낮은 신뢰도의 결과는
     /// 대개 UI 아이콘이나 노이즈를 글자로 오인한 것이다.
+    /// (합성 벤치마크에서는 모든 조각이 0.97 이상이라 이 하한이 걸린 적은 없다.
+    ///  실제 스크린샷의 아이콘·장식 요소에 대비한 방어선이다.)
     var minimumConfidence: Float
 
     init(
-        minimumTextHeight: Float = 0.008,
+        minimumTextHeight: Float? = nil,
         usesLanguageCorrection: Bool = true,
         customWords: [String] = [],
         minimumConfidence: Float = 0.3
@@ -49,7 +52,9 @@ struct OCRService {
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = usesLanguageCorrection
         request.recognitionLanguages = ["ko-KR", "en-US"]
-        request.minimumTextHeight = minimumTextHeight
+        if let minimumTextHeight {
+            request.minimumTextHeight = minimumTextHeight
+        }
         if !customWords.isEmpty {
             request.customWords = customWords
         }
