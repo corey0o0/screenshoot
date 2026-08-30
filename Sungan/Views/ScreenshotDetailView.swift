@@ -3,10 +3,10 @@ import SwiftData
 import SwiftUI
 
 struct ScreenshotDetailView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var screenshot: Screenshot
     @State private var image: UIImage?
-    @State private var showExportError = false
-    @State private var exportErrorMessage = ""
+    @State private var exportErrorMessage: String?
     @State private var showShareSheet = false
 
     private let shareTextBuilder = ShareTextBuilder()
@@ -26,15 +26,15 @@ struct ScreenshotDetailView: View {
             Section("분류") {
                 Picker("카테고리", selection: $screenshot.category) {
                     ForEach(ScreenshotCategory.allCases) { category in
-                        Text(category.rawValue).tag(category)
+                        Text(category.displayName).tag(category)
                     }
                 }
                 Toggle("텍스트형", isOn: $screenshot.isTextType)
                 Toggle("민감정보 포함", isOn: $screenshot.isSensitive)
                 Picker("상태", selection: $screenshot.status) {
-                    Text(ScreenshotStatus.unclassified.rawValue).tag(ScreenshotStatus.unclassified)
-                    Text(ScreenshotStatus.classified.rawValue).tag(ScreenshotStatus.classified)
-                    Text(ScreenshotStatus.onHold.rawValue).tag(ScreenshotStatus.onHold)
+                    ForEach(ScreenshotStatus.allCases) { status in
+                        Text(status.displayName).tag(status)
+                    }
                 }
             }
 
@@ -45,8 +45,11 @@ struct ScreenshotDetailView: View {
 
             if screenshot.isSensitive {
                 Section {
-                    Label("민감정보가 감지되어 외부 전송 대상에서 제외됩니다.", systemImage: "exclamationmark.shield")
-                        .foregroundStyle(.orange)
+                    Label(
+                        "민감정보가 감지됐어요. 공유하기 전에 내용을 한 번 확인해주세요.",
+                        systemImage: "exclamationmark.shield"
+                    )
+                    .foregroundStyle(.orange)
                 }
             }
 
@@ -62,6 +65,12 @@ struct ScreenshotDetailView: View {
                 } label: {
                     Label("Obsidian Vault에 저장", systemImage: "tray.and.arrow.down")
                 }
+
+                if !screenshot.sharedTo.isEmpty {
+                    Text("공유함: \(screenshot.sharedTo.joined(separator: ", "))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .navigationTitle("스크린샷")
@@ -69,10 +78,14 @@ struct ScreenshotDetailView: View {
         .task {
             await loadFullImage()
         }
-        .alert("저장 실패", isPresented: $showExportError) {
-            Button("확인", role: .cancel) {}
+        // 상세 화면에서 상태를 바꾸면 위젯 숫자도 따라가야 리스트와 어긋나지 않는다.
+        .onChange(of: screenshot.status) {
+            UnclassifiedCountSync.refresh(context: modelContext)
+        }
+        .alert("저장 실패", isPresented: .constant(exportErrorMessage != nil)) {
+            Button("확인", role: .cancel) { exportErrorMessage = nil }
         } message: {
-            Text(exportErrorMessage)
+            Text(exportErrorMessage ?? "")
         }
         .sheet(isPresented: $showShareSheet) {
             ActivityShareSheet(items: [shareTextBuilder.markdown(for: screenshot)]) { completed in
@@ -84,26 +97,31 @@ struct ScreenshotDetailView: View {
     }
 
     private func loadFullImage() async {
+        guard image == nil else { return }
         let results = PHAsset.fetchAssets(withLocalIdentifiers: [screenshot.assetIdentifier], options: nil)
         guard let asset = results.firstObject else { return }
         image = await PhotoLibraryService().requestImage(for: asset, targetSize: PHImageManagerMaximumSize)
     }
 
     private func markShared(destination: String) {
-        screenshot.sharedTo.append(destination)
+        if !screenshot.sharedTo.contains(destination) {
+            screenshot.sharedTo.append(destination)
+        }
         screenshot.status = .classified
         screenshot.processedAt = Date()
+        UnclassifiedCountSync.refresh(context: modelContext)
     }
 
     private func exportToObsidian() {
-        let markdown = shareTextBuilder.markdown(for: screenshot)
-        let fileName = screenshot.assetIdentifier.replacingOccurrences(of: "/", with: "_")
         do {
-            try obsidianExporter.export(markdown: markdown, fileName: fileName)
+            try obsidianExporter.export(
+                markdown: shareTextBuilder.markdown(for: screenshot),
+                fileName: shareTextBuilder.fileName(for: screenshot)
+            )
             markShared(destination: "Obsidian")
         } catch {
-            exportErrorMessage = "설정 화면에서 Obsidian vault 폴더를 먼저 선택해주세요."
-            showExportError = true
+            exportErrorMessage = (error as? LocalizedError)?.errorDescription
+                ?? error.localizedDescription
         }
     }
 }

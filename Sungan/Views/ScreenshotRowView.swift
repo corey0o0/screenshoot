@@ -21,7 +21,7 @@ struct ScreenshotRowView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Text(screenshot.category.rawValue)
+                    Text(screenshot.category.displayName)
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)

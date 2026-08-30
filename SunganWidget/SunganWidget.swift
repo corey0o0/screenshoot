@@ -18,13 +18,13 @@ struct UnclassifiedProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UnclassifiedEntry>) -> Void) {
         let entry = UnclassifiedEntry(date: Date(), count: currentCount())
-        // 앱이 스캔을 마칠 때마다 WidgetCenter.reloadTimelines를 호출해 값을 갱신하므로
-        // 여기서는 별도의 주기적 갱신 정책이 필요 없다.
+        // 앱이 스캔을 마치거나 사용자가 상태를 바꿀 때마다 WidgetCenter.reloadTimelines를
+        // 호출해 값을 갱신하므로, 여기서 주기적으로 다시 깨울 필요가 없다.
         completion(Timeline(entries: [entry], policy: .never))
     }
 
     private func currentCount() -> Int {
-        AppGroup.sharedDefaults.integer(forKey: AppGroup.Key.unclassifiedCount)
+        AppGroup.sharedDefaults?.integer(forKey: AppGroup.Key.unclassifiedCount) ?? 0
     }
 }
 
@@ -36,24 +36,24 @@ struct SunganUnclassifiedWidgetView: View {
             Image(systemName: "photo.stack")
                 .font(.title2)
                 .foregroundStyle(.orange)
-            Text("\(entry.count)장")
-                .font(.title.bold())
-            Text("미분류 스크린샷")
+            Text(entry.count == 0 ? "다 정리했어요" : "\(entry.count)장")
+                .font(entry.count == 0 ? .headline : .title.bold())
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+            Text(entry.count == 0 ? "미분류 없음" : "미분류 스크린샷")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .containerBackground(.fill.tertiary, for: .widget)
-        .widgetURL(URL(string: "sungan://unclassified"))
+        .widgetURL(SunganDeepLink.unclassified)
     }
 }
 
 struct SunganUnclassifiedWidget: Widget {
-    let kind = "SunganUnclassifiedWidget"
-
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: UnclassifiedProvider()) { entry in
+        StaticConfiguration(kind: SunganWidgetKind.unclassified, provider: UnclassifiedProvider()) { entry in
             SunganUnclassifiedWidgetView(entry: entry)
         }
         .configurationDisplayName("미분류 스크린샷")

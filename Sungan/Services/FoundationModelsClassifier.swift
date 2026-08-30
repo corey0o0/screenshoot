@@ -54,7 +54,7 @@ struct FoundationModelsClassifier: ClassificationEngine {
                 to: "OCR 텍스트:\n\(trimmed)",
                 generating: FoundationModelsClassificationResult.self
             )
-            let category = ScreenshotCategory(rawValue: response.content.category) ?? .etc
+            let category = ScreenshotCategory(displayName: response.content.category) ?? .etc
             return ScreenshotClassification(
                 category: category,
                 isTextType: response.content.isTextType,

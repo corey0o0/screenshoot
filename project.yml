@@ -26,9 +26,10 @@ targets:
       path: Sungan/App/Sungan.entitlements
     settings:
       base:
+        # PRODUCT_NAME은 Swift 모듈명·실행 파일명의 기준이 되므로 ASCII로 둔다.
+        # 홈 화면에 보이는 한글 이름은 Info.plist의 CFBundleDisplayName이 담당한다.
+        PRODUCT_NAME: Sungan
         PRODUCT_BUNDLE_IDENTIFIER: com.corey0o0.sungan
-        PRODUCT_NAME: "순간"
-        INFOPLIST_KEY_CFBundleDisplayName: "순간"
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -50,18 +51,36 @@ targets:
       path: SunganWidget/SunganWidget.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.corey0o0.sungan.widget
         PRODUCT_NAME: SunganWidget
-        INFOPLIST_KEY_CFBundleDisplayName: "순간 위젯"
+        PRODUCT_BUNDLE_IDENTIFIER: com.corey0o0.sungan.widget
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: NO
+  SunganTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: SunganTests
+    dependencies:
+      - target: Sungan
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.corey0o0.sungan.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Sungan.app/Sungan"
+        BUNDLE_LOADER: "$(TEST_HOST)"
 schemes:
   Sungan:
     build:
       targets:
         Sungan: all
+        SunganTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - SunganTests
     archive:
       config: Release
