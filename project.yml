@@ -19,13 +19,16 @@ targets:
     deploymentTarget: "18.0"
     sources:
       - path: Sungan
+        excludes:
+          - "App/Info.plist"
+          - "App/Sungan.entitlements"
       - path: Shared
-    info:
-      path: Sungan/App/Info.plist
-    entitlements:
-      path: Sungan/App/Sungan.entitlements
     settings:
       base:
+        # info:/entitlements: 키는 파일을 '생성'해 덮어쓰므로 쓰지 않는다.
+        # 직접 관리하는 파일을 빌드 세팅으로 참조만 한다.
+        INFOPLIST_FILE: Sungan/App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sungan/App/Sungan.entitlements
         # PRODUCT_NAME은 Swift 모듈명·실행 파일명의 기준이 되므로 ASCII로 둔다.
         # 홈 화면에 보이는 한글 이름은 Info.plist의 CFBundleDisplayName이 담당한다.
         PRODUCT_NAME: Sungan
@@ -44,13 +47,14 @@ targets:
     deploymentTarget: "18.0"
     sources:
       - path: SunganWidget
+        excludes:
+          - "Info.plist"
+          - "SunganWidget.entitlements"
       - path: Shared
-    info:
-      path: SunganWidget/Info.plist
-    entitlements:
-      path: SunganWidget/SunganWidget.entitlements
     settings:
       base:
+        INFOPLIST_FILE: SunganWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SunganWidget/SunganWidget.entitlements
         PRODUCT_NAME: SunganWidget
         PRODUCT_BUNDLE_IDENTIFIER: com.corey0o0.sungan.widget
         MARKETING_VERSION: "1.0.0"

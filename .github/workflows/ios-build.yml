@@ -21,6 +21,23 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      - name: Verify Info.plist / entitlements survived generation
+        run: |
+          # XcodeGen의 info:/entitlements: 키는 파일을 덮어쓴다. 실수로 되돌아가면
+          # 위젯이 설치 단계에서 "extensionDictionary must be set"으로 죽고,
+          # 앱은 사진 권한 설명이 사라져 런타임에 크래시한다. 여기서 먼저 잡는다.
+          set -e
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" \
+            SunganWidget/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :NSPhotoLibraryUsageDescription" \
+            Sungan/App/Info.plist > /dev/null
+          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes:0" \
+            Sungan/App/Info.plist
+          for f in Sungan/App/Sungan.entitlements SunganWidget/SunganWidget.entitlements; do
+            /usr/libexec/PlistBuddy -c \
+              "Print :com.apple.security.application-groups:0" "$f"
+          done
+
       - name: Pick an available iPhone simulator
         id: sim
         run: |
