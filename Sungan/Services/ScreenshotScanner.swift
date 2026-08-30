@@ -48,10 +48,7 @@ final class ScreenshotScanner {
         for asset in batch {
             if Task.isCancelled { break }
 
-            guard let image = await photoLibrary.requestImage(
-                for: asset,
-                targetSize: CGSize(width: 1024, height: 1024)
-            ) else { continue }
+            guard let image = await photoLibrary.requestImageForOCR(for: asset) else { continue }
 
             let ocrText = (try? await ocrService.recognizeText(in: image)) ?? ""
             let classification = await classificationService.classify(ocrText: ocrText)

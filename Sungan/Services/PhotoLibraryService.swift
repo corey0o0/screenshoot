@@ -28,6 +28,13 @@ struct PhotoLibraryService {
         return assets
     }
 
+    /// OCR용 이미지. 축소하면 글자 높이가 그대로 줄어 인식률이 급격히 떨어지므로
+    /// 원본 해상도를 그대로 받는다. (1179x2556 스크린샷을 1024에 맞춰 넣으면
+    /// 40% 크기가 되어 32px 본문이 13px이 된다.)
+    func requestImageForOCR(for asset: PHAsset) async -> UIImage? {
+        await requestImage(for: asset, targetSize: PHImageManagerMaximumSize)
+    }
+
     func requestImage(for asset: PHAsset, targetSize: CGSize) async -> UIImage? {
         await withCheckedContinuation { continuation in
             let resumeLock = OSAllocatedUnfairLock(initialState: false)
